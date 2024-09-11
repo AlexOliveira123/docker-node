@@ -1,0 +1,56 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - node-app
+    networks:
+      - node-app-network
+
+  node-app:
+    build:
+      context: ./node-app
+    container_name: node-app
+    volumes:
+      - ./node-app:/usr/src/app
+    tty: true
+    ports:
+      - "3000:3000"
+    environment:
+      - MYSQL_DATABASE=fullcycledb
+      - MYSQL_ROOT_PASSWORD=root
+    depends_on:
+      - mysql
+    restart: always
+    networks:
+      - node-app-network
+
+  mysql:
+    platform: linux/x86_64
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: mysql
+    restart: always
+    tty: true
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - node-app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  mysql-data:
+
+networks:
+  node-app-network:
+    driver: bridge
