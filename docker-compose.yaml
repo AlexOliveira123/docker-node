@@ -16,6 +16,7 @@ services:
     container_name: node-app
     volumes:
       - ./node-app:/usr/src/app
+      - /usr/src/app/node_modules
     tty: true
     ports:
       - "3000:3000"
@@ -23,7 +24,8 @@ services:
       - MYSQL_DATABASE=fullcycledb
       - MYSQL_ROOT_PASSWORD=root
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     restart: always
     networks:
       - node-app-network
@@ -37,9 +39,9 @@ services:
     tty: true
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=fullcycledb
     networks:
       - node-app-network
     healthcheck:
